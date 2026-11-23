@@ -52,6 +52,17 @@ def setup_logging():
 
     logger.add(
         settings.log_file,
+        rotation=["10 MB", "1 day"],
+        retention="7 days",
+        compression="gz",
+        serialize=True,
+        level="ERROR",
+        enqueue=True
+    )
+
+
+    logger.add(
+        settings.log_file,
         rotation="1 day",
         retention="7 days",
         compression="gz",
