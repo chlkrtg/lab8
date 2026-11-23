@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, constr, conint, Field
+import re
+
+from pydantic import BaseModel, EmailStr, constr, conint, Field, field_validator
 from typing import Any, List, Optional
 
 
@@ -15,6 +17,15 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: constr(min_length=8, max_length=16)
     phone: Optional[str] = "Unknown"
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+=/\\[\]~`]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
 
 
 class ValidationErrorDetail(BaseModel):
