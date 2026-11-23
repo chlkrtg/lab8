@@ -2,7 +2,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.exceptions import CustomExceptionA, CustomExceptionB
-from app.schemas import ErrorResponse
+from app.schemas import ErrorResponse, ProblemDetails, ValidationErrorDetail
 from app.logging_config import log_error
 
 
@@ -49,17 +49,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     await log_error(request, exc, 422)
     errors = []
     for error in exc.errors():
-        errors.append({
-            "field": ".".join(str(loc) for loc in error["loc"]),
-            "message": error["msg"],
-            "type": error["type"]
-        })
+        errors.append(ValidationErrorDetail(
+            field=".".join(str(loc) for loc in error["loc"]),
+            message=error["msg"],
+            code=error["type"]
+        ))
+    problem = ProblemDetails(
+        instance=str(request.url),
+        errors=errors if errors else None
+    )
     return JSONResponse(
         status_code=422,
-        content=ErrorResponse(
-            status_code=422,
-            error_type="ValidationError",
-            message="Request validation failed",
-            details=errors
-        ).model_dump()
+        content=problem.model_dump(),
+        headers={"Content-Type": "application/problem+json"}
     )
