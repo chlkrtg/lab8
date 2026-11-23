@@ -78,7 +78,11 @@ async def get_request_body(request: Request, max_bytes: int = 2048) -> str:
 async def log_error(request: Request, exc: Exception, status_code: int, request_id: Optional[str] = None):
     """Логирует ошибку с полным контекстом запроса."""
     if request_id is None:
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request_id = (
+                getattr(request.state, "request_id", None)
+                or request.headers.get("X-Request-ID")
+                or str(uuid.uuid4())
+        )
 
     try:
         method = request.method

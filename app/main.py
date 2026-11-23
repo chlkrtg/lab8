@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, Request
 from app.config import settings
 from app.routers import users_router, test_router
 from app.exceptions import CustomExceptionA, CustomExceptionB
@@ -24,3 +25,12 @@ app.include_router(test_router)
 @app.get("/")
 async def root():
     return {"message": "Hello, Error Handling Lab!"}
+
+
+@app.middleware("http")
+async def add_request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
